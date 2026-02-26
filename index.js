@@ -21,6 +21,11 @@ app.use(express.static("public"));
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
+
 
 app.use((req, res, next) => {
     const username = req.query.user;
