@@ -1,0 +1,38 @@
+<%- include("./header.ejs") %>
+
+<section class="section">
+    
+<h1>Global Posts</h1>
+
+<div class="posts-container">
+    <% if (posts.length === 0) { %>
+        <p>No posts available yet.</p>
+    <% } %>
+
+    <% posts.forEach((post) => { %>
+        
+        <div class="post-card">
+            
+            <div class="post-header">
+                <span class="post-author">
+                    post created by <%= post.user %> on
+                </span>
+                <span class="post-date">
+                    <%= post.date_created %> | at <%= post.time_created %>
+                </span>
+            </div>
+
+            <h2 class="post-title"><%= post.title %></h2>
+
+            <p class="post-content">
+                <%= post.text %>
+            </p>
+
+        </div>
+
+    <% }) %>
+</div>
+
+</section>
+
+<%- include("./footer.ejs") %>

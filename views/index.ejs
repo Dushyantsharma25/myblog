@@ -1,0 +1,36 @@
+<%- include("./up/header.ejs") %>
+
+<section class="hero">
+    <h1>Welcome to My Blogging Website</h1>
+    <p>Read amazing articles on Technology, Programming, and Life.</p>
+</section>
+
+<section class="section">
+    <h2>Top Posts</h2>
+
+    <div class="posts">
+
+        <% if (posts && posts.length > 0) { %>
+
+            <% posts.forEach((post) => { %>
+                <div class="card">
+                    <h3><%= post.title %></h3>
+                    <p>
+                        <%= post.text.substring(0, 120) %>...
+                    </p>
+                    <small>
+                        By <%= post.user %> | <%= post.date_created %>
+                    </small>
+                </div>
+            <% }) %>
+
+        <% } else { %>
+
+            <p>No posts available yet.</p>
+
+        <% } %>
+
+    </div>
+</section>
+
+<%- include("./up/footer.ejs") %>

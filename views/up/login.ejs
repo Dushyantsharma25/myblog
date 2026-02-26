@@ -1,0 +1,39 @@
+<%- include("./header.ejs") %>
+
+
+
+<div class="register">
+    <h1 style="text-align: center;">Login</h1>
+
+    <form action="/login" method="post">
+        <label for="name">Username</label>
+        <input type="text" name="name" id="name" placeholder="Enter Username" minlength="4" maxlength="20" required>
+        <label for="pass">Password</label>
+        <div class="password-box">
+            <input type="password" name="pass" id="pass" placeholder="Enter password" minlength="8" maxlength="30" required>
+            <span id="togglePassword">+</span>
+        </div>
+        <button type="submit">Login</button>
+    </form>
+</div>
+
+<script>
+const togglePassword = document.getElementById("togglePassword");
+const password = document.getElementById("pass");
+
+togglePassword.addEventListener("click", function () {
+    if (password.type === "password") {
+        password.type = "text";
+        this.textContent = "*";
+    } else {
+        password.type = "password";
+        this.textContent = "+";
+    }
+});
+</script>
+
+
+
+
+<%- include("./footer.ejs") %>
+

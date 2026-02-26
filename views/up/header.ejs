@@ -1,0 +1,32 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MyBlog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+<header>
+    <h2>MyBlog</h2>
+
+<nav>
+    <a href="/">Home</a>
+
+    <% if (Username) { %>
+        <a href="/blogs?user=<%= Username %>">Blogs</a>
+        <a href="/about?user=<%= Username %>">About</a>
+        <a href="/contacts?user=<%= Username %>">Contact</a>
+        <a href="/profile?user=<%= Username %>">Profile</a>
+        <a href="/settings?user=<%= Username %>">Settings</a>
+        <a href="/logout?user=<%= Username %>">Logout</a>
+    <% } else { %>
+        <a href="/blogs">Blogs</a>
+        <a href="/about">About</a>
+        <a href="/contacts">Contact</a>
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+    <% } %>
+</nav>
+</header>
