@@ -12,7 +12,7 @@
     <h2>MyBlog</h2>
 
 <nav>
-    <a href="/">Home</a>
+    <a href="<%= Username ? '/?user=' + Username : '/' %>">Home</a>
 
     <% if (Username) { %>
         <a href="/blogs?user=<%= Username %>">Blogs</a>
