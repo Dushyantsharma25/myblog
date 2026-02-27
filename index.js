@@ -1,15 +1,16 @@
 import express from "express";
-import { dirname, join } from "path";
+import { dirname } from "path";
 import { fileURLToPath } from "url";
 import bodyParser from "body-parser";
 import session from "express-session";
+
 const dn = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const port = process.env.PORT || 3000;
-const users = new Map();
-const posts = [];
 
+const users = new Map();   
+const posts = [];
 
 app.use(session({
   secret: "mysecretkey",
@@ -18,8 +19,8 @@ app.use(session({
 }));
 
 app.use(express.static("public"));
-
 app.use(bodyParser.urlencoded({ extended: true }));
+
 
 app.use((req, res, next) => {
   res.set("Cache-Control", "no-store");
@@ -28,213 +29,179 @@ app.use((req, res, next) => {
 
 
 app.use((req, res, next) => {
-    const username = req.query.user;
+  res.locals.Username = req.session.username || null;
+  next();
+});
 
-    if (username && users.has(username)) {
-        res.locals.Username = username;
-    } else {
-        res.locals.Username = null;
-    }
 
-    next();
+
+
+app.post("/register", (req, res) => {
+  const username = req.body.name;
+  const password = req.body.pass;
+
+  if (users.has(username)) {
+    return res.send("User already exists. Please login.");
+  }
+
+  users.set(username, password);
+  res.redirect("/login");
+});
+
+
+app.post("/login", (req, res) => {
+  const username = req.body.name;
+  const password = req.body.pass;
+
+  if (!users.has(username)) {
+    return res.send("User does not exist.");
+  }
+
+  if (users.get(username) !== password) {
+    return res.send("Incorrect password.");
+  }
+
+  
+  req.session.username = username;
+
+  res.redirect("/profile");
 });
 
 
 app.get("/logout", (req, res) => {
-  const username = req.query.user;
-
-  if (username && users.has(username)) {
-    const userData = users.get(username);
-    userData.islogged = false;
-    users.set(username, userData);
-  }
-
-  res.redirect("/");
-});
-
-app.post("/register", (req, res) => {
-  const username = req.body["name"];
-  const password = req.body["pass"];
-
-  if (users.has(username)) {
-    res.send(`User already exists. Please login.<br><a href="./login">Login</a>`);
-  } else {
-    users.set(username, {
-      password: password,
-      islogged: false
-    });
-    res.send(`Registration successful!<br><a href="./login">Login</a>`);
-  }
-});
-
-app.get("/profile", (req, res) => {
-  const username = req.query.user;
-
-  if (username && users.has(username)) {
-    const userData = users.get(username);
-
-    if (userData.islogged) {
-      res.render(dn + "/views/user/blogpost.ejs", {
-        Username: username,
-        posts: posts.reverse()
-      });
-    } else {
-      res.render(dn + "/views/user/logout.ejs");
-    }
-
-  } else {
-    res.redirect("/login");
-  }
-});
-
-app.post("/login", (req, res) => {
-  const username = req.body["name"];
-  const password = req.body["pass"];
-
-  if (users.has(username)) {
-    const userData = users.get(username);
-
-    if (userData.password === password) {
-      userData.islogged = true;
-      users.set(username, userData);
-
-     
-      res.redirect("/profile?user=" + username);
-    } else {
-      res.send("Incorrect password!");
-    }
-  } else {
-    res.send("User does not exist!");
-  }
-});
-
-app.get("/login", (req, res) => {
-  res.render(dn + "/views/up/login.ejs", {});
-});
-
-app.get("/register", (req, res) => {
-  res.render(dn + "/views/up/register.ejs", {});
-});
-
-app.get("/blogs", (req, res) => {
-    const username = req.query.user;
-
-    res.render(dn + "/views/up/blogs.ejs", {
-        Username: username || null,
-        posts: posts.reverse()
-    });
-});
-
-app.get("/contacts", (req, res) => {
-  res.render(dn + "/views/up/contacts.ejs", {});
-});
-
-app.get("/about", (req, res) => {
-  res.render(dn + "/views/up/about.ejs", {});
-});
-
-app.get("/", (req, res) => {
-  const username = req.query.user;
-
-  const topPosts = posts.slice(-3).reverse();
-
-  res.render(dn + "/views/index.ejs", {
-    Username: username || null,
-    posts: topPosts
+  req.session.destroy(() => {
+    res.redirect("/");
   });
 });
 
-app.post("/profile", (req, res) => {
-  const username = req.query.user;
 
-  if (username && users.has(username)) {
-    const userData = users.get(username);
 
-    if (userData.islogged) {
-      const date = new Date();
 
-      posts.push({
-        user: username,
-        title: req.body["title"],
-        text: req.body["text"],
-        date_created: date.toDateString(),
-        time_created: date.toLocaleTimeString()
-      });
+app.get("/profile", (req, res) => {
 
-      res.redirect("/profile?user=" + username);
-    } else {
-      res.redirect("/login");
-    }
-
-  } else {
-    res.redirect("/login");
+  if (!req.session.username) {
+    return res.redirect("/login");
   }
+
+  const userPosts = posts.filter(p => p.user === req.session.username);
+
+  res.render(dn + "/views/user/blogpost.ejs", {
+    posts: userPosts
+  });
 });
 
-app.post("/delete", (req, res) => {
-    const username = req.query.user;
-    const index = req.body["index"];
 
-    if (username && users.has(username)) {
-        posts.splice(index, 1);
-        res.redirect("/profile?user=" + username);
-    } else {
-        res.redirect("/login");
-    }
+
+
+app.post("/profile", (req, res) => {
+
+  if (!req.session.username) {
+    return res.redirect("/login");
+  }
+
+  const date = new Date();
+
+  posts.push({
+    user: req.session.username,
+    title: req.body.title,
+    text: req.body.text,
+    date_created: date.toDateString(),
+    time_created: date.toLocaleTimeString()
+  });
+
+  res.redirect("/profile");
+});
+
+
+app.post("/delete", (req, res) => {
+
+  if (!req.session.username) {
+    return res.redirect("/login");
+  }
+
+  const index = req.body.index;
+
+  if (posts[index] && posts[index].user === req.session.username) {
+    posts.splice(index, 1);
+  }
+
+  res.redirect("/profile");
 });
 
 
 app.post("/update", (req, res) => {
-  const username = req.query.user;
-  const index = req.body["index"];
 
-  if (username && users.has(username)) {
-    res.render(dn + "/views/user/update.ejs", {
-      Username: username,
-      posts: posts,
-      index: index,
-    });
-  } else {
-    res.redirect("/login");
+  if (!req.session.username) {
+    return res.redirect("/login");
   }
+
+  const index = req.body.index;
+
+  if (!posts[index] || posts[index].user !== req.session.username) {
+    return res.redirect("/profile");
+  }
+
+  res.render(dn + "/views/user/update.ejs", {
+    post: posts[index],
+    index: index
+  });
 });
 
 
 app.post("/post_update", (req, res) => {
-  const username = req.query.user;
-  const index = req.body["index"];
-  const Title = req.body["title"];
-  const content = req.body["text"];
 
-  if (username && users.has(username)) {
+  if (!req.session.username) {
+    return res.redirect("/login");
+  }
 
-    posts.splice(index, 1);
+  const index = req.body.index;
+
+  if (posts[index] && posts[index].user === req.session.username) {
+
+    posts[index].title = req.body.title;
+    posts[index].text = req.body.text;
 
     const date = new Date();
-
-    posts.push({
-      user: username,
-      title: Title,
-      text: content,
-      date_created: date.toDateString(),
-      time_created: date.toLocaleTimeString()
-    });
-
-    res.redirect("/profile?user=" + username);
-
-  } else {
-    res.redirect("/login");
+    posts[index].date_created = date.toDateString();
+    posts[index].time_created = date.toLocaleTimeString();
   }
+
+  res.redirect("/profile");
 });
 
 
-// app.get("/")
+
+
+app.get("/", (req, res) => {
+  const topPosts = posts.slice(-3).reverse();
+  res.render(dn + "/views/index.ejs", { posts: topPosts });
+});
+
+
+app.get("/blogs", (req, res) => {
+  res.render(dn + "/views/up/blogs.ejs", {
+    posts: posts.slice().reverse()
+  });
+});
+
+
+app.get("/login", (req, res) => {
+  res.render(dn + "/views/up/login.ejs");
+});
+
+app.get("/register", (req, res) => {
+  res.render(dn + "/views/up/register.ejs");
+});
+
+app.get("/about", (req, res) => {
+  res.render(dn + "/views/up/about.ejs");
+});
+
+app.get("/contacts", (req, res) => {
+  res.render(dn + "/views/up/contacts.ejs");
+});
+
 
 app.listen(port, () => {
-  console.log(`App is started on ${port}`);
-  console.log(`http://localhost:${port}`);
+  console.log(`Server running on http://localhost:${port}`);
 });
-
-
-
-
