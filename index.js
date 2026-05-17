@@ -9,6 +9,17 @@ const dn = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = process.env.PORT || 3000;
 
+function verify(k){
+  for (var i=0;i<k.length;i++){
+    var ch = k[i];
+    if(!((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9'))){
+      return 0; 
+    }
+  }
+
+  return 1;
+}
+
 const users = new Map();   
 const posts = [];
 
@@ -42,6 +53,8 @@ app.post("/register", (req, res) => {
 
   if (users.has(username)) {
     return res.send("User already exists. Please login.");
+  }else if(!verify(username)){
+    return res.send("Username is Invalid enter in format A-Z,a-z,1-9");
   }
 
   users.set(username, password);
